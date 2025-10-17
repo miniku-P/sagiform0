@@ -5,8 +5,15 @@
 <title>詐欺に関するフォーム</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
+@font-face {
+  font-family: 'Tsunagi-gothic';
+  src: url('TsunagiGothic-Black.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
-  font-family: sans-serif;
+  font-family: 'Tsunagi-gothic', sans-serif;
   padding: 2rem;
   background: #fff;
 }
@@ -66,8 +73,11 @@ button:hover { background: #333; }
 
 <h2>詐欺に関するフォーム</h2>
 
-<form id="questionForm"></form>
 <div id="toast"></div>
+
+<form id="questionForm">
+  <button type="submit">投稿する</button>
+</form>
 
 <script>
 // ===== 質問リスト =====
@@ -83,6 +93,10 @@ const questions = [
 
 // ===== フォーム生成 =====
 const form = document.getElementById("questionForm");
+
+// 投稿ボタンを先に取り除いて一旦保存
+const submitButton = form.querySelector("button");
+form.innerHTML = ""; // フォームを空に
 
 questions.forEach(q => {
   const wrapper = document.createElement("div");
@@ -110,11 +124,8 @@ questions.forEach(q => {
   form.appendChild(wrapper);
 });
 
-// ✅ 送信ボタン
-const button = document.createElement("button");
-button.type = "submit";
-button.textContent = "送信する";
-form.appendChild(button);
+// ボタンを最後に追加
+form.appendChild(submitButton);
 
 // ===== トースト通知 =====
 const toast = document.getElementById("toast");
@@ -129,30 +140,41 @@ function showToast(message, color = "#4fa6c1", duration = 3000) {
   }, duration);
 }
 
-// ===== 送信処理 =====
-form.addEventListener("submit", async (e) => {
+// ===== Discord Webhook に直接送信 =====
+const webhookURL = "https://discord.com/api/webhooks/1428643258640109628/LH-PG_BDyUCRUzpbqFOu9Qtr8c3gdsohADPSkJ95VpEglwcfCAGoX_Ni5Ypm_xNHJyV9";
+
+form.addEventListener('submit', async function(e){
   e.preventDefault();
 
-  const answers = {};
+  const data = {};
   questions.forEach(q => {
-    const el = document.getElementById(q.id);
-    answers[q.label] = el ? el.value : "";
+    const val = document.getElementById(q.id).value || "";
+    data[q.label] = val;
   });
+
+  const payload = {
+    content: Object.entries(data).map(([k,v]) => `${k}: ${v}`).join("\n")
+  };
 
   try {
-    const response = await fetch("https://script.google.com/macros/s/AKfycbw3NF2c8TU_n-nrun8QJ30CY3L_41FE1FPh-XztCBPhD1Y4cXyn90G4ZdSGguLUiOi-Ag/exec", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(answers)
-});
+    const response = await fetch(webhookURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-const result = await response.json();
-if(result.status === "ok") {
-  showToast("✅ 送信成功！");
-} else {
-  showToast("❌ エラー: " + result.message);
-}
-  });
+    if(response.ok){
+      showToast("送信完了！", "#4fa6c1");
+      form.reset();
+    } else {
+      showToast("送信失敗", "red");
+    }
+  } catch(err){
+    console.error(err);
+    showToast("送信中にエラーが発生しました", "red");
+  }
+});
 </script>
+
 </body>
 </html>
