@@ -140,25 +140,19 @@ form.addEventListener("submit", async (e) => {
   });
 
   try {
-    await fetch("https://script.google.com/macros/s/AKfycbzhThW2D3Px-gxgqLXI5p3ageH1Ci2h_rO-opKYvOXpUc_fYZFGeO4YXTydRTc_G9tT/exec", {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbxYQ_s6irZK7i3om-z7B9RAWmdmqMA8FOaGJ4pdn3pefhEOaKkFf_dKnJUOTKUB2ZD8uQ/exec", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(answers)
-　});
-
-
-
-    if (response.ok) {
-      showToast("✅ 送信されました！", "#3cb371");
-      form.reset();
-    } else {
-      showToast("❌ 送信に失敗しました", "#dc143c");
-    }
-  } catch (err) {
-    console.error(err);
-    showToast("⚠️ 通信エラーが発生しました", "#778899");
-  }
 });
+
+const result = await response.json();
+if(result.status === "ok") {
+  showToast("✅ 送信成功！");
+} else {
+  showToast("❌ エラー: " + result.message);
+}
+  });
 </script>
 </body>
 </html>
